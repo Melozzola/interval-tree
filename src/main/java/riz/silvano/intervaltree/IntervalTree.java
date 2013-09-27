@@ -1,13 +1,11 @@
 package riz.silvano.intervaltree;
 
 /**
- * Hello world!
+ * 
+ * @author mele
  *
  */
-public class App 
+public class IntervalTree 
 {
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
-    }
+    
 }
