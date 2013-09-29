@@ -2,81 +2,233 @@ package riz.silvano.intervaltree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import junit.framework.Assert;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
 
 /**
+ * Tests
  * 
  * @author mele
- *
  */
-public class IntervalTreeTest 
-    extends TestCase
+@RunWith(JUnit4.class)
+public class IntervalTreeTest
 {
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public IntervalTreeTest( String testName )
-    {
-        super( testName );
-    }
+	
+	@Before
+	public void setUp()
+	{
+		
+	}
 
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( IntervalTreeTest.class );
-    }
+	@Test
+	public void testIntervalTree() throws InterruptedException
+	{
+		
+		List<Interval> data = generate(-1);
 
-    /**
-     * 
-     */
-    public void testIntervalTree()
-    {
-        List<Interval> data = new ArrayList<Interval>();
-        data.add(new Interval(0, 9, "0..9"));
-        data.add(new Interval(10, 19, "10..19"));
-        data.add(new Interval(20, 29, "20..29"));
-        data.add(new Interval(30, 39, "30..39"));
-        data.add(new Interval(40, 49, "40..49"));
-        data.add(new Interval(50, 59, "50..59"));
-        data.add(new Interval(50, 59, "45..55"));
-        
-        IntervalTree tree = new IntervalTree(data);
-        
-        Assert.assertNotNull(tree);
-        Assert.assertEquals(data.size(), tree.getNodeCount());
-        
-        tree.print();
-        
-    }
-    
-    public void testRecursionLimit()
-    {
-    	int iterations = 100000;
-    	
-    	List<Interval> data = new ArrayList<Interval>();
-    	
-    	long min;
-    	long max;
-    	String info;
-    	for (int i=0; i<iterations; i++){
-    		min = 0 + (int)(Math.random() * ((10000 - 0) + 1));
-    		max = (min+1) + (int)(Math.random() * ((10000 - (min+1)) + 1));
-    		info = String.format("%d..%d", min, max);
-    		data.add(new Interval(min, max, info));
-    	}
-    	
-    	 IntervalTree tree = new IntervalTree(data);
-         
-         Assert.assertNotNull(tree);
-         Assert.assertEquals(iterations, tree.getNodeCount());
-    	
-    }
+		StatusListener listener = new StatusListener();
+		IntervalTree tree = new IntervalTree(data, listener);
+		
+		while (!listener.isLoaded())
+		{
+			Thread.sleep(100);
+		}
+
+		Assert.assertNotNull(tree);
+		Assert.assertEquals(data.size(), tree.getNodeCount());
+
+		System.out.println(tree);
+
+	}
+
+	@Test
+	public void testRecursionLimit() throws InterruptedException
+	{
+
+		Memory before = new Memory();
+		
+		// Used -Xmx2048m
+		// 1000000 give a java.lang.OutOfMemoryError: Java heap space in the construction
+		// 100000 give a java.lang.OutOfMemoryError: Java heap space in the processing
+		// 50000 it's seems very slow
+		// 20000 it's seems slow
+		List<Interval> data = generate(10000);
+
+		StatusListener listener = new StatusListener();
+		IntervalTree tree = new IntervalTree(data, listener);
+		
+		while (!listener.isLoaded())
+		{
+			Thread.sleep(100);
+		}
+		
+		Assert.assertNotNull(tree);
+		Assert.assertEquals(data.size(), tree.getNodeCount());
+
+		Memory after = new Memory();
+		
+		System.out.println("Mem before\n " + before);
+		System.out.println("Mem after\n " + after);
+		
+		// Try a query
+		long start = System.currentTimeMillis();
+		List<Interval> resultset = tree.query(500);
+		long end = System.currentTimeMillis();
+		System.out.println("Query executed in " + (end - start) + " ms ");
+		printQueryResult(resultset, 500);
+		
+	}
+
+	@Test
+	public void testQuery() throws InterruptedException
+	{
+		List<Interval> data = generate(-1);
+
+		StatusListener listener = new StatusListener();
+		IntervalTree tree = new IntervalTree(data, listener);
+		
+		while (!listener.isLoaded())
+		{
+			Thread.sleep(100);
+		}
+		
+		System.out.println(tree);
+		
+		List<Interval> resultset = tree.query(5);
+		printQueryResult(resultset, 5);
+		
+		resultset = tree.query(15);
+		printQueryResult(resultset, 15);
+		
+		resultset = tree.query(25);
+		printQueryResult(resultset, 25);
+		
+		resultset = tree.query(35);
+		printQueryResult(resultset, 35);
+		
+		resultset = tree.query(45);
+		printQueryResult(resultset, 45);
+		
+		resultset = tree.query(53);
+		printQueryResult(resultset, 53);
+	}
+
+	
+	// ---------------------------------
+	// Utility methods
+	// ---------------------------------
+	
+	private void printQueryResult(List<Interval> intervals, long query)
+	{
+		System.out.println("Query: " + query);
+		
+		if (intervals == null)
+		{
+			System.out.println("Null resultset");
+		}
+		else if (intervals.size() == 0)
+		{
+			System.out.println("Empty resultset");
+		}
+		else
+		{
+			for (Interval interval : intervals) 
+			{
+				System.out.print(String.format("[%d..%d]", interval.getMin(), interval.getMax()));
+			}
+			System.out.println();
+		}
+	}
+	
+	private List<Interval> generate(int size)
+	{
+		List<Interval> data = new ArrayList<Interval>();
+
+		if (size < 1)
+		{
+			data.add(new Interval(0, 9, "0..9"));
+			data.add(new Interval(10, 19, "10..19"));
+			data.add(new Interval(20, 29, "20..29"));
+			data.add(new Interval(30, 39, "30..39"));
+			data.add(new Interval(40, 49, "40..49"));
+			data.add(new Interval(50, 59, "50..59"));
+			data.add(new Interval(45, 55, "45..55"));
+		}
+		else
+		{
+			long min;
+			long max;
+			String info;
+			for (int i=0; i<size; i++)
+			{
+				min = 0 + (int)(Math.random() * ((10000 - 0) + 1));
+				max = (min+1) + (int)(Math.random() * ((10000 - (min+1)) + 1));
+				info = String.format("%d..%d", min, max);
+				data.add(new Interval(min, max, info));
+			}
+		}
+			
+		return data;
+
+	}
+	
+	
 }
+
+class StatusListener implements TreeStatusListener
+{
+	private AtomicBoolean loaded = new AtomicBoolean(false);
+	
+	public boolean isLoaded()
+	{
+		return loaded.get();
+	}
+	
+	public void loaded() {
+		loaded.set(true);
+	}
+	
+}
+
+class Memory
+{
+	private static final int MB = 1024*1024;
+	
+	private long usedMemory;
+	private long freeMemory;
+	private long totalMemory;
+	private long maxMemory;
+	
+	Memory()
+	{
+		Runtime runtime = Runtime.getRuntime();
+		usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / MB;
+		freeMemory = runtime.freeMemory() / MB;
+		totalMemory = runtime.totalMemory() / MB;
+		maxMemory = runtime.maxMemory() / MB;
+	}
+	
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder("\n##### Heap utilization statistics [MB] #####");
+		
+		sb.append(String.format("\nUsed Memory: %d", usedMemory));
+		sb.append(String.format("\nFree Memory: %d", freeMemory));
+		sb.append(String.format("\nTotal Memory: %d", totalMemory));
+		sb.append(String.format("\nMax Memory: %d", maxMemory));
+		
+		sb.append("\n#############################################\n");
+		
+		return sb.toString();
+	}
+	
+}
+
+

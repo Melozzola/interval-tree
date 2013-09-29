@@ -3,24 +3,46 @@ package riz.silvano.intervaltree;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An index node.
+ * Contains the index of an interval and the indexes of all the overlapping intervals
+ * 
+ * @author mele
+ */
 public class Node {
 
+	// The position in the indexed array
 	private int idx;
-	private Node left;
-	private Node right;
-	private List<Integer> overlappingRanges;
-	private List<Integer> reverseOrder;
 	
-	public Node(int idx, List<Interval> data)
-	{
-		
-		System.out.println("[" + data.get(idx).getMin() + "," + data.get(idx).getMax() + "]");
-		
+	// The left subtree
+	private Node left;
+	
+	// the right subtree
+	private Node right;
+	
+	// List of positions in the indexed array containing overlapping intervals
+	// This is ordered by left end
+	private List<Integer> overlappingRanges;
+	
+	// Right end order of the overlappings.
+	private int[] reverseOrder;
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param idx The position in the indexed array.
+	 */
+	public Node(int idx)
+	{	
 		this.idx = idx;
 		overlappingRanges = new ArrayList<Integer>();
-		reverseOrder = new ArrayList<Integer>();
 	}
 	
+	/**
+	 * Adds the index of an overlapping interval
+	 * 
+	 * @param idx The index of the overlapping interval
+	 */
 	public void addOverlappingInterval(int idx)
 	{
 		overlappingRanges.add(idx);
@@ -30,8 +52,12 @@ public class Node {
 		return overlappingRanges;
 	}
 
-	public List<Integer> getReverseOrder() {
-		return reverseOrder;
+	public int[] getReverseOrder() {
+		if (reverseOrder==null){
+			reverseOrder = new int[overlappingRanges.size()];
+			// TODO - sort in reverse order
+		}
+		return reverseOrder;	
 	}
 
 	public int getIdx() {

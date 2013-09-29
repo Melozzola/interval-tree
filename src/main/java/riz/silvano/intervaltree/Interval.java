@@ -1,11 +1,28 @@
 package riz.silvano.intervaltree;
 
+/**
+ * Models an interval
+ * 
+ * @author mele
+ */
 public class Interval {
 
+	// The left point
 	private long min;
+	
+	// The right point
 	private long max;
+	
+	// Interval info
 	private String info;
 	
+	/**
+	 * Constructor.
+	 * 
+	 * @param min The left point
+	 * @param max The right point
+	 * @param info The interval info
+	 */
 	public Interval(long min, long max, String info) {
 		super();
 		this.min = min;
@@ -25,6 +42,10 @@ public class Interval {
 		return info;
 	}
 	
-	
+	@Override
+	public String toString()
+	{
+		return String.format("[%d..%d] -> %s", min,max, info);
+	}
 	
 }
