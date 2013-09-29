@@ -97,7 +97,7 @@ public class IntervalTree
 
 		root = buildIndex(0, data.size() -1);
 
-		pool = new DefaultThreadPool(5);
+		pool = new DefaultThreadPool(threadPoolSize);
 
 		iterativePostOrderTraversal(root, new FindOverlaps());
 	}
