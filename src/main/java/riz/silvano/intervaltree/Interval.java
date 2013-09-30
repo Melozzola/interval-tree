@@ -24,7 +24,6 @@ public class Interval {
 	 * @param info The interval info
 	 */
 	public Interval(long min, long max, String info) {
-		super();
 		this.min = min;
 		this.max = max;
 		this.info = info;
