@@ -96,6 +96,7 @@ public class IntervalTreeTest {
 		System.out.println("Mem after\n " + after);
 
 		// Try a query
+		long overallstart = System.currentTimeMillis();
 		long start;
 		long end;
 		long query;
@@ -107,7 +108,8 @@ public class IntervalTreeTest {
 			System.out.println("Query executed in " + (end - start) + " ms ");
 			printQueryResult(resultset, query);
 		}
-
+		long overallend = System.currentTimeMillis();
+		System.out.println("Total query time " + (overallend - overallstart) + " ms ");
 	}
 
 	@Test

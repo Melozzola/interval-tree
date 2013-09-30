@@ -36,7 +36,7 @@ public class IntervalTree {
 	private TreeStatusListener listener;
 
 	// The size of the threadPool
-	private int threadPoolSize = 4;
+	private int threadPoolSize = 20;
 
 	/**
 	 * Listener called when the initialization phase is complete
