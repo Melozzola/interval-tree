@@ -151,6 +151,10 @@ public class IntervalTreeTest {
 		Memory before = new Memory();
 
 		List<Interval> data = generateFromFiles();
+		Memory after = new Memory();
+
+		System.out.println("Mem before Data load\n " + before);
+		System.out.println("Mem after Data load\n " + after);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
@@ -160,10 +164,10 @@ public class IntervalTreeTest {
 		}
 		Assert.assertNotNull(tree);
 
-		Memory after = new Memory();
+		after = new Memory();
 
-		System.out.println("Mem before\n " + before);
-		System.out.println("Mem after\n " + after);
+		System.out.println("Mem before Tree Load\n " + before);
+		System.out.println("Mem after Tree Load\n " + after);
 
 		// Try a query
 		long overallstart = System.currentTimeMillis();
@@ -238,11 +242,10 @@ public class IntervalTreeTest {
 	}
 	
 	private List<Interval> generateFromFiles() {
-		IntervalFile file1 = new IntervalFile("H:/Product Development/BIN Lookups Files/BIN Files 2013/BIN021813.dat", "AIB", "2013-02-18");
-		IntervalFile file2 = new IntervalFile("H:/Product Development/BIN Lookups Files/BIN Files 2013/ELAVON BIN.ACCTRNG_19022013",
-				"ELAVON", "2013-02-19");
+		IntervalFile file1 = new IntervalFile("BIN021813.dat", "AIB", "2013-02-18");
+		IntervalFile file2 = new IntervalFile("ELAVON BIN.ACCTRNG_19022013", "ELAVON", "2013-02-19");
 
-		IntervalFile[] files = {file1, file2};
+		IntervalFile[] files = { file1, file2 };
 		return IntervalFileLoader.loadIntervalsFromFiles(files);
 	}
 
