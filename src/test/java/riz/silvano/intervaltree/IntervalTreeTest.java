@@ -57,8 +57,9 @@ public class IntervalTreeTest {
 		Memory before = new Memory();
 
 		// Used -Xmx1048m
-		// 100000 it's OK as long as the interval spread is not generating too many overlaps
-		// Otherwise a java.lang.OutOfMemoryError: Java heap space in the construction will be thrown
+		// TestUtils.generate(1000000, 0, 10000000, 50, 1000) is too much
+		// TestUtils.generate(100000, 0, 10000000, 50, 1000) is ok
+		// The error when there are too many overlaps is: java.lang.OutOfMemoryError: Java heap space
 		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 1000);
 
 		StatusListener listener = new StatusListener();
@@ -84,7 +85,7 @@ public class IntervalTreeTest {
 	{
 
 		Memory before = new Memory();
-
+	
 		List<Interval> data = TestUtils.generate(100000, 0, 1000000, 50, 1000);
 
 		StatusListener listener = new StatusListener();
