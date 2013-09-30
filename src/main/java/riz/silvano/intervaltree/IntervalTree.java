@@ -10,13 +10,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.threadpool.DefaultThreadPool;
 import org.apache.commons.threadpool.ThreadPool;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Implementation of an interval tree that allows to query all the intervals that contain a particular point
+ * Implementation of an interval tree that allows to query all the intervals that contain a particular point.
  *  
  * @author mele
  *
  */
 public class IntervalTree {
+	
+	private static Logger log = LoggerFactory.getLogger(IntervalTree.class);
+	
 	//The root node of the index. The data will be kept in an array
 	private Node root;
 
@@ -35,13 +41,16 @@ public class IntervalTree {
 	// Listener to notify when the tree has been initialized
 	private TreeStatusListener listener;
 
-	// The size of the threadPool
-	private int threadPoolSize = 20;
+	/**
+	 * Default thread pool size for the initialization process
+	 */
+	public static final int DEFAUT_THREAD_POOL_SIZE = 4;
 
 	/**
 	 * Listener called when the initialization phase is complete
 	 */
-	public interface TreeStatusListener {
+	public interface TreeStatusListener 
+	{
 		/**
 		 * Method called when the tree is ready
 		 */
@@ -50,9 +59,11 @@ public class IntervalTree {
 
 	/**
 	 * Returns the node count
+	 * 
 	 * @return the node count
 	 */
-	public int getNodeCount() {
+	public int getNodeCount() 
+	{
 		return nodeCount;
 	}
 
@@ -62,13 +73,18 @@ public class IntervalTree {
 	 * 
 	 * @param data The list of intervals
 	 * @param listener The {@link TreeStatusListener} to be notified when the tree is complete
+	 * @param threadPoolSize the thread pool size for the initialization process.
 	 */
-	public IntervalTree(List<Interval> data, TreeStatusListener listener) {
+	public IntervalTree(List<Interval> data, TreeStatusListener listener, int threadPoolSize) 
+	{
 
-		if ((data == null) || (data.size() == 0)) {
+		if ((data == null) || (data.size() == 0)) 
+		{
 			throw new IllegalArgumentException("data cannot be null or empty");
 		}
 
+		log.info("Creating interval tree. Data size is {}", data.size() );
+		
 		pool = new DefaultThreadPool(threadPoolSize);
 		this.listener = listener;
 		processedNodes = new AtomicInteger(0);
@@ -76,12 +92,18 @@ public class IntervalTree {
 
 		Collections.sort(data, new Comparator<Interval>() {
 
-			public int compare(Interval o1, Interval o2) {
-				if (o1.getMin() < o2.getMin()) {
+			public int compare(Interval o1, Interval o2) 
+			{
+				if (o1.min < o2.min) 
+				{
 					return -1;
-				} else if (o1.getMin() == o2.getMin()) {
+				} 
+				else if (o1.min == o2.min) 
+				{
 					return 0;
-				} else {
+				} 
+				else 
+				{
 					return 1;
 				}
 			}
@@ -89,12 +111,24 @@ public class IntervalTree {
 		});
 
 		root = buildIndex(0, data.size() - 1);
-
-		//System.out.println("Init nodes");
-		//iterativePostOrderTraversal(root, new FindOverlaps());
-		//listener.loaded();
+		
+		log.info("Index created");
+		
 	}
 
+	/**
+	 * Constructor.
+	 * The initialization of each node is carried out in separate threads to improve performances.
+	 * It uses the default thread pool size for the initialization process
+	 * 
+	 * @param data The list of intervals
+	 * @param listener The {@link TreeStatusListener} to be notified when the tree is complete
+	 */
+	public IntervalTree(List<Interval> data, TreeStatusListener listener) 
+	{
+		this(data, listener, DEFAUT_THREAD_POOL_SIZE);
+	}
+	
 	/**
 	 * Builds the index. This method is using recursion over the data array.
 	 * 
@@ -106,20 +140,24 @@ public class IntervalTree {
 
 		int middleIdx = (lowerIdx + upperIdx) / 2;
 
-		System.out.println("buildIndex(" + lowerIdx + "," + upperIdx + ") | middle = " + middleIdx);
-
+		if (log.isDebugEnabled())
+		{
+			log.debug(String.format("buildIndex(%d, %d) | middle = %d", lowerIdx, upperIdx, middleIdx));
+		}
+		
 		Node n = new Node(middleIdx);
 		nodeCount++;
 		pool.invokeLater(new FindOverlapsJob(n));
-		//findOverlaps(n);
-		System.out.println("|overlappings| = " + n.getOverlappingRanges().size());
 
-		if (lowerIdx != upperIdx) {
-			if (lowerIdx < middleIdx) {
-				n.setLeft(buildIndex(lowerIdx, middleIdx - 1));
+		if (lowerIdx != upperIdx)
+		{
+			if (lowerIdx < middleIdx) 
+			{
+				n.left=(buildIndex(lowerIdx, middleIdx - 1));
 			}
-			if (middleIdx < upperIdx) {
-				n.setRight(buildIndex(middleIdx + 1, upperIdx));
+			if (middleIdx < upperIdx) 
+			{
+				n.right=(buildIndex(middleIdx + 1, upperIdx));
 			}
 		}
 
@@ -133,40 +171,58 @@ public class IntervalTree {
 	 * @param root The tree root
 	 * @param processor A {@link VisitProcessor} that will be called for each node.
 	 */
-	public static void iterativePostOrderTraversal(Node root, VisitProcessor processor) {
+	public static void iterativePostOrderTraversal(Node root, VisitProcessor processor) 
+	{
 
 		Node cur = root;
 		Node pre = root;
 
 		Stack<Node> s = new Stack<Node>();
 
-		if (root != null) {
+		if (root != null) 
+		{
 			s.push(root);
 		}
 
-		while (!s.isEmpty()) {
+		while (!s.isEmpty()) 
+		{
+			
 			cur = s.peek();
-			if (cur.equals(pre) || cur.equals(pre.getLeft()) || cur.equals(pre.getRight())) {
+			
+			if (cur.idx == pre.idx || (pre.left != null && cur.idx == pre.left.idx) || (pre.right != null && cur.idx == pre.right.idx)) 
+			{
 				// we are traversing down the tree
-				if (cur.getLeft() != null) {
-					s.push(cur.getLeft());
-				} else if (cur.getRight() != null) {
-					s.push(cur.getRight());
+				if (cur.left != null) 
+				{
+					s.push(cur.left);
+				} 
+				else if (cur.right != null) 
+				{
+					s.push(cur.right);
 				}
-				if ((cur.getLeft() == null) && (cur.getRight() == null)) {
+				if ((cur.left == null) && (cur.right == null)) 
+				{
 					processor.process(s.pop());
 				}
-			} else if (pre.equals(cur.getLeft())) {
+			} 
+			else if (cur.left != null && pre.idx == cur.left.idx) 
+			{
 				// we are traversing up the tree from the left
-				if (cur.getRight() != null) {
-					s.push(cur.getRight());
-				} else if (cur.getRight() == null) {
+				if (cur.right != null) 
+				{
+					s.push(cur.right);
+				} 
+				else if (cur.right == null) 
+				{
 					processor.process(s.pop());
 				}
-			} else if (pre.equals(cur.getRight())) {
+			} 
+			else if (cur.right != null && pre.idx == cur.right.idx) 
+			{
 				// we are traversing up the tree from the right
 				processor.process(s.pop());
 			}
+			
 			pre = cur;
 		}
 	}
@@ -177,80 +233,113 @@ public class IntervalTree {
 	 * @param query The point
 	 * @return All the intervals containing the specific point
 	 */
-	public List<Interval> query(long query) {
+	public List<Interval> query(long query) 
+	{
 
+		log.info("Query {}", query);
+		
+		long startTime = System.currentTimeMillis();
 		List<Interval> resultSet = new ArrayList<Interval>();
 
 		if (root == null)
+		{
 			return resultSet;
-
+		}
+		
 		Node current = root;
+		int hops = 0;
 
-		do {
+		do 
+		{
 
-			if ((data.get(current.getIdx()).getMin() <= query) && (data.get(current.getIdx()).getMax() >= query)) {
+			if (IntervalUtils.contains(data.get(current.idx), query)) 
+			{
+				
 				// Found the interval, add it to the result set
-				resultSet.add(data.get(current.getIdx()));
+				resultSet.add(data.get(current.idx));
 
 				// Verify all the overlapping intervals
 				// TODO -  This can be improved
-				for (Integer idx : current.getOverlappingRanges()) {
-					if ((data.get(idx).getMin() <= query) && (data.get(idx).getMax() >= query)) {
+				for (Integer idx : current.overlappingRanges) 
+				{
+					if (IntervalUtils.contains(data.get(idx), query)) 
+					{
 						resultSet.add(data.get(idx));
 					}
 				}
 
 				current = null;
-			} else {
+			} 
+			else 
+			{
 				// Continue the query on one of the subtrees
-				long pivot = data.get(current.getIdx()).getMin();
-				if (pivot > query) {
-					current = current.getLeft();
-				} else {
-					current = current.getRight();
+				long pivot = data.get(current.idx).min;
+				if (pivot > query) 
+				{
+					current = current.left;
+				}
+				else 
+				{
+					current = current.right;
 				}
 			}
+			
+			hops++;
 
-		} while (current != null);
-
+		} 
+		while (current != null);
+		
 		// Sort the result set by interval width
 		Collections.sort(resultSet, new Comparator<Interval>() {
 
-			public int compare(Interval o1, Interval o2) {
-				long size1 = (o1.getMax() - o1.getMin()) / 2;
-				long size2 = (o2.getMax() - o2.getMin()) / 2;
-				if (size1 > size2) {
+			public int compare(Interval o1, Interval o2) 
+			{
+				long size1 = (o1.max - o1.min) / 2;
+				long size2 = (o2.max - o2.min) / 2;
+				
+				if (size1 > size2) 
+				{
 					return 1;
-				} else if (size1 == size2) {
+				} 
+				else if (size1 == size2) 
+				{
 					return 0;
-				} else {
+				} 
+				else 
+				{
 					return -1;
 				}
 			}
 
 		});
 
+		long endTime = System.currentTimeMillis();
+		log.info("Found {} results | iterations = {} | query time = {} ms ", resultSet.size(), hops, (endTime-startTime));
+		
 		return resultSet;
 
 	}
 
 	@Override
-	public String toString() {
+	public String toString() 
+	{
 		final StringBuilder sb = new StringBuilder();
 
-		iterativePostOrderTraversal(root, new VisitProcessor() {
+		iterativePostOrderTraversal(root, new VisitProcessor() 
+		{
 
-			public void process(Node node) {
+			public void process(Node node) 
+			{
 
-				int idx = node.getIdx();
-				Interval i = data.get(idx);
+				Interval i = data.get(node.idx);
+				sb.append(String.format("%d : %s", node.idx, IntervalUtils.stringify(i)));
 
-				sb.append(String.format("%d : [%d..%d]", idx, i.getMin(), i.getMax()));
-
-				if ((node.getOverlappingRanges() != null) && (node.getOverlappingRanges().size() > 0)) {
+				if ((node.overlappingRanges != null) && (node.overlappingRanges.size() > 0)) 
+				{
 					sb.append(" | Overlaps: ");
-					for (Integer overlapping : node.getOverlappingRanges()) {
-						sb.append(String.format("[%d..%d]", data.get(overlapping).getMin(), data.get(overlapping).getMax()));
+					for (Integer overlapping : node.overlappingRanges) 
+					{
+						sb.append(IntervalUtils.stringify(data.get(overlapping)));
 					}
 				}
 			}
@@ -259,79 +348,52 @@ public class IntervalTree {
 		return sb.toString();
 	}
 
-	private void findOverlaps(Node node) {
-
-		System.out.println("Fining overlaps of " + data.get(node.getIdx()));
-
-		Interval current = data.get(node.getIdx());
-		Interval next;
-		int idx = 0;
-
-		do {
-
-			next = data.get(idx);
-			if ((idx != node.getIdx()) && (next.getMin() < current.getMax()) && (current.getMin() < next.getMax())) {
-
-				//System.out.println("Fount overlap " + );
-
-				node.addOverlappingInterval(idx);
-			}
-			idx++;
-
-		} while ((idx < data.size()) && (next.getMin() < current.getMax()));
-
-	}
-
-	/**
-	 * Implementation of {@link VisitProcessor} that will find the overlapping intervals
-	 * for a given node.
-	 * The process is execute in a thread taken from the thread pool.
-	 */
-	private class FindOverlaps implements VisitProcessor {
-
-		public void process(Node node) {
-			pool.invokeLater(new FindOverlapsJob(node));
-		}
-
-	}
-
 	/**
 	 * The {@link Runnable} job that finds the overlapping intervals
 	 */
-	private class FindOverlapsJob implements Runnable {
+	private class FindOverlapsJob implements Runnable 
+	{
 
 		private Node n;
 
-		private FindOverlapsJob(Node n) {
+		private FindOverlapsJob(Node n) 
+		{
 			this.n = n;
 		}
 
-		public void run() {
+		public void run() 
+		{
 
-			Interval current = data.get(n.getIdx());
+			Interval current = data.get(n.idx);
 			Interval next;
 			int idx = 0;
+			
 			// Iterate over all the data searching for overlappings
-			// TODO - It can be improved
-			do {
+			do 
+			{
 
 				next = data.get(idx);
-				if ((idx != n.getIdx()) && (next.getMin() < current.getMax()) && (current.getMin() < next.getMax())) {
-
-					//System.out.println("Fount overlap " + );
-
-					n.addOverlappingInterval(idx);
+				
+				if ((idx != n.idx) && IntervalUtils.overlaps(current, next)) 
+				{
+					n.overlappingRanges.add(idx);
 				}
 				idx++;
 
-			} while ((idx < data.size()) && (next.getMin() < current.getMax()));
+			} 
+			while ((idx < data.size()) && (next.min < current.max));
 
 			int res = processedNodes.addAndGet(1);
-
-			System.out.println(String.format("%d / %d", res, data.size()));
-
+			
+			log.info("Node {} ready | {} overlappings intervals", n.idx, n.overlappingRanges.size());
+			
 			// Notify the listener if we finished
-			if ((res == data.size()) && (listener != null)) {
+			if ((res == data.size()) && (listener != null)) 
+			{
+				if (log.isDebugEnabled())
+				{
+					log.debug("All data has been loaded {}", data.size());
+				}
 				listener.loaded();
 			}
 
