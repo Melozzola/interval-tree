@@ -96,11 +96,17 @@ public class IntervalTreeTest {
 		System.out.println("Mem after\n " + after);
 
 		// Try a query
-		long start = System.currentTimeMillis();
-		List<Interval> resultset = tree.query(500);
-		long end = System.currentTimeMillis();
-		System.out.println("Query executed in " + (end - start) + " ms ");
-		printQueryResult(resultset, 500);
+		long start;
+		long end;
+		long query;
+		for (int i = 0; i < 1000; i++) {
+			query = 0 + (int) (Math.random() * ((1000000 - 0) + 1));
+			start = System.currentTimeMillis();
+			List<Interval> resultset = tree.query(query);
+			end = System.currentTimeMillis();
+			System.out.println("Query executed in " + (end - start) + " ms ");
+			printQueryResult(resultset, query);
+		}
 
 	}
 
@@ -169,7 +175,7 @@ public class IntervalTreeTest {
 		} else {
 
 			int minBoundary = 0;
-			int numOfIntervals = 1000000;
+			int maxBoundary = 1000000;
 			long minWidth = 50;
 			long maxWidth = 1000;
 
@@ -177,7 +183,7 @@ public class IntervalTreeTest {
 			long width;
 			String info;
 			for (int i = 0; i < size; i++) {
-				min = minBoundary + (int) (Math.random() * ((numOfIntervals - minWidth - minBoundary) + 1));
+				min = minBoundary + (int) (Math.random() * ((maxBoundary - maxWidth - minBoundary) + 1));
 				width = minWidth + (int) (Math.random() * ((maxWidth - minWidth) + 1));
 				info = String.format("%d..%d", min, min + width);
 				data.add(new Interval(min, min + width, info));
