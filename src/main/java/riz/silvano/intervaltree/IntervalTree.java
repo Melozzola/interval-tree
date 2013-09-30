@@ -106,13 +106,13 @@ public class IntervalTree {
 
 		int middleIdx = (lowerIdx + upperIdx) / 2;
 
-		System.out.println("buildIndex(" + lowerIdx + "," + upperIdx + ") | middle = " + middleIdx);
+		//System.out.println("buildIndex(" + lowerIdx + "," + upperIdx + ") | middle = " + middleIdx);
 
 		Node n = new Node(middleIdx);
 		nodeCount++;
 		pool.invokeLater(new FindOverlapsJob(n));
 		//findOverlaps(n);
-		System.out.println("|overlappings| = " + n.getOverlappingRanges().size());
+		//System.out.println("|overlappings| = " + n.getOverlappingRanges().size());
 
 		if (lowerIdx != upperIdx) {
 			if (lowerIdx < middleIdx) {
@@ -328,7 +328,7 @@ public class IntervalTree {
 
 			int res = processedNodes.addAndGet(1);
 
-			System.out.println(String.format("%d / %d", res, data.size()));
+			//System.out.println(String.format("%d / %d", res, data.size()));
 
 			// Notify the listener if we finished
 			if ((res == data.size()) && (listener != null)) {

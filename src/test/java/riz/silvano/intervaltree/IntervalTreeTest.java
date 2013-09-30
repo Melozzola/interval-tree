@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
+import riz.silvano.intervaltree.loader.IntervalFileLoader;
 
 /**
  * Tests
@@ -144,6 +145,46 @@ public class IntervalTreeTest {
 		printQueryResult(resultset, 53);
 	}
 
+	@Test
+	public void testQueryTimeUsingFileData() throws InterruptedException {
+
+		Memory before = new Memory();
+
+		List<Interval> data = generateFromFiles();
+
+		StatusListener listener = new StatusListener();
+		IntervalTree tree = new IntervalTree(data, listener);
+
+		while (!listener.isLoaded()) {
+			Thread.sleep(100);
+		}
+		Assert.assertNotNull(tree);
+
+		Memory after = new Memory();
+
+		System.out.println("Mem before\n " + before);
+		System.out.println("Mem after\n " + after);
+
+		// Try a query
+		long overallstart = System.currentTimeMillis();
+		long start;
+		long end;
+		long query;
+		
+		long cardNumMin = Long.parseLong("300000000000");
+		long cardNumMax = Long.parseLong("600000000000");
+		
+		for (int i = 0; i < 1000; i++) {
+			query = cardNumMin + (long) (Math.random() * (cardNumMax - cardNumMin));
+			start = System.currentTimeMillis();
+			List<Interval> resultset = tree.query(query);
+			end = System.currentTimeMillis();
+			System.out.println("Query executed in " + (end - start) + " ms ");
+			printQueryResult(resultset, query);
+		}
+		long overallend = System.currentTimeMillis();
+		System.out.println("Total query time " + (overallend - overallstart) + " ms ");
+	}
 	// ---------------------------------
 	// Utility methods
 	// ---------------------------------
@@ -194,6 +235,15 @@ public class IntervalTreeTest {
 
 		return data;
 
+	}
+	
+	private List<Interval> generateFromFiles() {
+		IntervalFile file1 = new IntervalFile("H:/Product Development/BIN Lookups Files/BIN Files 2013/BIN021813.dat", "AIB", "2013-02-18");
+		IntervalFile file2 = new IntervalFile("H:/Product Development/BIN Lookups Files/BIN Files 2013/ELAVON BIN.ACCTRNG_19022013",
+				"ELAVON", "2013-02-19");
+
+		IntervalFile[] files = {file1, file2};
+		return IntervalFileLoader.loadIntervalsFromFiles(files);
 	}
 
 }

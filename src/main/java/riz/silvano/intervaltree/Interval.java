@@ -16,6 +16,9 @@ public class Interval {
 	// Interval info
 	private String info;
 	
+	// ID (index) of interval file source 
+	private int intervalFile;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -30,6 +33,11 @@ public class Interval {
 		this.info = info;
 	}
 
+	public Interval(long min, long max, String info, int fileId) {
+		this(min, max, info);
+		this.intervalFile = fileId;
+	}
+	
 	public long getMin() {
 		return min;
 	}
@@ -45,7 +53,7 @@ public class Interval {
 	@Override
 	public String toString()
 	{
-		return String.format("[%d..%d] -> %s", min,max, info);
+		return String.format("[%d..%d] -> %s (%d)", min,max, info, intervalFile);
 	}
 	
 }
