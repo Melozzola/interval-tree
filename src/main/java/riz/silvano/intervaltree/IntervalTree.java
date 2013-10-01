@@ -229,6 +229,35 @@ public class IntervalTree {
 	}
 
 	/**
+	 * Method to recursively compute the max height of the tree.
+	 * 
+	 * @param node The current root
+	 * @return The max height of the tree (or subtree)
+	 */
+	private int maxHeight(Node node)
+	{
+		if (node == null)
+		{
+			return 0;
+		}
+		int leftHeight = maxHeight(node.left);
+		int rightHeight = maxHeight(node.right);
+		
+		return (leftHeight > rightHeight) ? leftHeight + 1 : rightHeight + 1;
+		
+	}
+	
+	/**
+	 * Returns the max height of the tree
+	 * 
+	 * @return the max height of the tree
+	 */
+	public int maxHeight() 
+	{
+		return maxHeight(root);
+	}
+	
+	/**
 	 * Returns all the intervals containing the specific point
 	 * 
 	 * @param query The point

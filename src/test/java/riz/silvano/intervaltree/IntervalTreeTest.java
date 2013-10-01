@@ -87,6 +87,9 @@ public class IntervalTreeTest
 		Assert.assertNotNull(tree);
 		Assert.assertEquals(data.size(), tree.getNodeCount());
 
+		int depth = tree.maxHeight();
+		log.info("Depth : {}", depth);
+		
 		Memory after = new Memory();
 
 		log.info("Mem before\n " + before);
@@ -113,6 +116,9 @@ public class IntervalTreeTest
 		Assert.assertNotNull(tree);
 		Assert.assertEquals(data.size(), tree.getNodeCount());
 
+		int depth = tree.maxHeight();
+		log.info("Depth : {}", depth);
+		
 		Memory after = new Memory();
 
 		log.info("Mem before\n " + before);
@@ -146,6 +152,9 @@ public class IntervalTreeTest
 			Thread.sleep(100);
 		}
 
+		int depth = tree.maxHeight();
+		log.info("Depth : {}", depth);
+		
 		log.info("Tree : \n", tree);
 
 		List<Interval> resultset = tree.query(0);
