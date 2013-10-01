@@ -29,6 +29,9 @@ public class IntervalTree {
 	// The node count
 	private int nodeCount = 0;
 
+	// Loading percentage
+	private AtomicInteger initializationPercent;
+	
 	// Interval data.
 	private List<Interval> data;
 
@@ -88,6 +91,7 @@ public class IntervalTree {
 		pool = new DefaultThreadPool(threadPoolSize);
 		this.listener = listener;
 		processedNodes = new AtomicInteger(0);
+		initializationPercent = new AtomicInteger(0);
 		this.data = data;
 
 		Collections.sort(data, new Comparator<Interval>() {
@@ -417,13 +421,26 @@ public class IntervalTree {
 			
 			log.debug("Node {} ready | {} overlappings intervals", n.idx, n.overlappingRanges.size());
 			
+			// Log some progress, without making too noise
+			int loaded = (100 * res) / data.size();
+			
+			if (loaded == 25 && initializationPercent.compareAndSet(0, 25))
+			{
+				log.info("Initialization 25% complete");
+			}
+			else if (loaded == 50 && initializationPercent.compareAndSet(25, 50)) 
+			{
+				log.info("Initialization 50% complete");
+			}
+			else if (loaded == 75 && initializationPercent.compareAndSet(50, 75)) 
+			{
+				log.info("Initialization 75% complete");
+			}
+			
 			// Notify the listener if we finished
 			if ((res == data.size()) && (listener != null)) 
 			{
-				if (log.isDebugEnabled())
-				{
-					log.debug("All data has been loaded {}", data.size());
-				}
+				log.info("Initialization 100% complete");
 				listener.loaded();
 			}
 
