@@ -8,11 +8,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
 
 /**
  * Tests
@@ -23,24 +22,21 @@ import org.slf4j.LoggerFactory;
 public class IntervalTreeTest {
 
 	private static final Logger log = LoggerFactory.getLogger(IntervalTreeTest.class);
-	
+
 	@Before
-	public void setUp() 
-	{
+	public void setUp() {
 		// Put here something you want to be executed before the test
 	}
-	
+
 	@Test
-	public void testIntervalTreeConstruction() throws InterruptedException 
-	{
+	public void testIntervalTreeConstruction() throws InterruptedException {
 
 		List<Interval> data = TestUtils.generate(20, 0, 100, 10, 40);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) 
-		{
+		while (!listener.isLoaded()) {
 			Thread.sleep(100);
 		}
 
@@ -51,22 +47,37 @@ public class IntervalTreeTest {
 	}
 
 	@Test
-	public void testRecursionLimit() throws InterruptedException 
-	{
+	public void testRecursionLimit() throws InterruptedException {
 
 		Memory before = new Memory();
 
 		// Used -Xmx1048m
 		// TestUtils.generate(1000000, 0, 10000000, 50, 1000) is too much
-		// TestUtils.generate(100000, 0, 10000000, 50, 1000) is ok
+		// TestUtils.generate(100000, 0, 10000000, 50, 1000) is ok:
+		//
+		// ##### Heap utilization statistics [MB] #####
+		// Used Memory: 2
+		// Free Memory: 12
+		// Total Memory: 15
+		// Max Memory: 1484
+		// #############################################
+		//
+		// [main] INFO riz.silvano.intervaltree.IntervalTreeTest - Mem after
+		// 
+		// ##### Heap utilization statistics [MB] #####
+		// Used Memory: 78
+		// Free Memory: 82
+		// Total Memory: 161
+		// Max Memory: 1484
+		// #############################################
+		//
 		// The error when there are too many overlaps is: java.lang.OutOfMemoryError: Java heap space
-		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 1000);
+		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 10000);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) 
-		{
+		while (!listener.isLoaded()) {
 			Thread.sleep(100);
 		}
 
@@ -81,18 +92,16 @@ public class IntervalTreeTest {
 	}
 
 	@Test
-	public void testQueryTime() throws InterruptedException 
-	{
+	public void testQueryTime() throws InterruptedException {
 
 		Memory before = new Memory();
-	
-		List<Interval> data = TestUtils.generate(100000, 0, 1000000, 50, 1000);
+
+		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 10000);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) 
-		{
+		while (!listener.isLoaded()) {
 			Thread.sleep(100);
 		}
 
@@ -106,34 +115,31 @@ public class IntervalTreeTest {
 
 		// Try a few queries
 		long query;
-		
+
 		long overallstart = System.currentTimeMillis();
-		for (int i = 0; i < 1000; i++) 
-		{
+		for (int i = 0; i < 1000; i++) {
 			query = 0 + (int) (Math.random() * ((1000000 - 0) + 1));
 			List<Interval> resultset = tree.query(query);
-			
+
 			log.info(TestUtils.printIntervals(resultset));
 		}
 		long overallend = System.currentTimeMillis();
-		
+
 		log.info("Total query time " + (overallend - overallstart) + " ms ");
 	}
 
 	@Test
-	public void testQuery() throws InterruptedException 
-	{
+	public void testQuery() throws InterruptedException {
 		List<Interval> data = TestUtils.generate();
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) 
-		{
+		while (!listener.isLoaded()) {
 			Thread.sleep(100);
 		}
 
-		log.info("Tree : \n",tree);
+		log.info("Tree : \n", tree);
 
 		List<Interval> resultset = tree.query(5);
 		log.info(TestUtils.printIntervals(resultset));
@@ -156,24 +162,20 @@ public class IntervalTreeTest {
 
 }
 
-class StatusListener implements TreeStatusListener 
-{
+class StatusListener implements TreeStatusListener {
 	private AtomicBoolean loaded = new AtomicBoolean(false);
 
-	public boolean isLoaded() 
-	{
+	public boolean isLoaded() {
 		return loaded.get();
 	}
 
-	public void loaded() 
-	{
+	public void loaded() {
 		loaded.set(true);
 	}
 
 }
 
-class Memory 
-{
+class Memory {
 	private static final int MB = 1024 * 1024;
 
 	private long usedMemory;
@@ -181,8 +183,7 @@ class Memory
 	private long totalMemory;
 	private long maxMemory;
 
-	Memory() 
-	{
+	Memory() {
 		Runtime runtime = Runtime.getRuntime();
 		usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / MB;
 		freeMemory = runtime.freeMemory() / MB;
@@ -191,8 +192,7 @@ class Memory
 	}
 
 	@Override
-	public String toString() 
-	{
+	public String toString() {
 		StringBuilder sb = new StringBuilder("\n##### Heap utilization statistics [MB] #####");
 
 		sb.append(String.format("\nUsed Memory: %d", usedMemory));
