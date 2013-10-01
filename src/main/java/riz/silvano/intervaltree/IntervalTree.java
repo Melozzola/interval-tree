@@ -66,7 +66,7 @@ public class IntervalTree {
 	{
 		return nodeCount;
 	}
-
+	
 	/**
 	 * Constructor.
 	 * The initialization of each node is carried out in separate threads to improve performances.
@@ -151,6 +151,7 @@ public class IntervalTree {
 
 		if (lowerIdx != upperIdx)
 		{
+			
 			if (lowerIdx < middleIdx) 
 			{
 				n.left=(buildIndex(lowerIdx, middleIdx - 1));
@@ -294,8 +295,8 @@ public class IntervalTree {
 
 			public int compare(Interval o1, Interval o2) 
 			{
-				long size1 = (o1.max - o1.min) / 2;
-				long size2 = (o2.max - o2.min) / 2;
+				long size1 = (o1.max - o1.min);
+				long size2 = (o2.max - o2.min);
 				
 				if (size1 > size2) 
 				{

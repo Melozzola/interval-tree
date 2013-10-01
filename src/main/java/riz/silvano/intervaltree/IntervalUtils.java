@@ -30,7 +30,7 @@ public final class IntervalUtils {
 	 */
 	public static boolean overlaps(Interval i1, Interval i2)
 	{
-		return ((i2.min < i1.max) && (i1.min < i2.max));
+		return ((i2.min <= i1.max) && (i1.min <= i2.max));
 	}
 	
 	/**

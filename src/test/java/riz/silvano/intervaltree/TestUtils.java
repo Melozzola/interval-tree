@@ -51,7 +51,6 @@ public final class TestUtils {
 
 	/**
 	 * Generates an hard coded interval set
-	 * 0-9, 10-19, 20-29,30-39,40-49,45-55,50-59
 	 * 
 	 * @return The pre-configured set of intervals
 	 */
@@ -60,13 +59,22 @@ public final class TestUtils {
 		List<Interval> data = new ArrayList<Interval>();
 
 		data.add(new Interval(0, 9, "0..9"));
-		data.add(new Interval(10, 19, "10..19"));
-		data.add(new Interval(20, 29, "20..29"));
-		data.add(new Interval(30, 39, "30..39"));
-		data.add(new Interval(40, 49, "40..49"));
-		data.add(new Interval(50, 59, "50..59"));
-		data.add(new Interval(45, 55, "45..55"));
+		
+		data.add(new Interval(20, 30, "20..30"));
+		data.add(new Interval(30, 41, "30..41"));
+		
+		data.add(new Interval(50, 65, "50..65"));
+		data.add(new Interval(60, 80, "60..80"));
+		
+		data.add(new Interval(100, 200, "100..200"));
+		data.add(new Interval(125, 150, "125..150"));
 
+		data.add(new Interval(300, 600, "300..600"));
+		data.add(new Interval(350, 400, "350..400"));
+		data.add(new Interval(450, 500, "450..500"));
+		data.add(new Interval(455, 460, "455..460"));
+		data.add(new Interval(480, 490, "480..490"));
+		
 		return data;
 	}
 

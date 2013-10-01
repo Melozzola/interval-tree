@@ -1,7 +1,6 @@
 package riz.silvano.intervaltree;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,32 +10,34 @@ import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
-
 /**
  * Tests
  * 
  * @author mele
  */
 @RunWith(JUnit4.class)
-public class IntervalTreeTest {
+public class IntervalTreeTest 
+{
 
 	private static final Logger log = LoggerFactory.getLogger(IntervalTreeTest.class);
 
 	@Before
-	public void setUp() {
+	public void setUp() 
+	{
 		// Put here something you want to be executed before the test
 	}
 
 	@Test
-	public void testIntervalTreeConstruction() throws InterruptedException {
+	public void testIntervalTreeConstruction() throws InterruptedException 
+	{
 
 		List<Interval> data = TestUtils.generate(20, 0, 100, 10, 40);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) {
+		while (!listener.isLoaded()) 
+		{
 			Thread.sleep(100);
 		}
 
@@ -47,7 +48,8 @@ public class IntervalTreeTest {
 	}
 
 	@Test
-	public void testRecursionLimit() throws InterruptedException {
+	public void testRecursionLimit() throws InterruptedException
+	{
 
 		Memory before = new Memory();
 
@@ -77,7 +79,8 @@ public class IntervalTreeTest {
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) {
+		while (!listener.isLoaded()) 
+		{
 			Thread.sleep(100);
 		}
 
@@ -92,7 +95,8 @@ public class IntervalTreeTest {
 	}
 
 	@Test
-	public void testQueryTime() throws InterruptedException {
+	public void testQueryTime() throws InterruptedException 
+	{
 
 		Memory before = new Memory();
 
@@ -101,7 +105,8 @@ public class IntervalTreeTest {
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) {
+		while (!listener.isLoaded()) 
+		{
 			Thread.sleep(100);
 		}
 
@@ -115,9 +120,9 @@ public class IntervalTreeTest {
 
 		// Try a few queries
 		long query;
-
 		long overallstart = System.currentTimeMillis();
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 1000; i++) 
+		{
 			query = 0 + (int) (Math.random() * ((1000000 - 0) + 1));
 			List<Interval> resultset = tree.query(query);
 
@@ -129,82 +134,117 @@ public class IntervalTreeTest {
 	}
 
 	@Test
-	public void testQuery() throws InterruptedException {
+	public void testQuery() throws InterruptedException 
+	{
 		List<Interval> data = TestUtils.generate();
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
 
-		while (!listener.isLoaded()) {
+		while (!listener.isLoaded()) 
+		{
 			Thread.sleep(100);
 		}
 
 		log.info("Tree : \n", tree);
 
-		List<Interval> resultset = tree.query(5);
+		List<Interval> resultset = tree.query(0);
 		log.info(TestUtils.printIntervals(resultset));
-
-		resultset = tree.query(15);
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 0);
+		Assert.assertTrue(resultset.get(0).max == 9);
+		
+		resultset = tree.query(5);
 		log.info(TestUtils.printIntervals(resultset));
-
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 0);
+		Assert.assertTrue(resultset.get(0).max == 9);
+		
+		resultset = tree.query(9);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 0);
+		Assert.assertTrue(resultset.get(0).max == 9);
+		
+		resultset = tree.query(10);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(0 == resultset.size());
+		
 		resultset = tree.query(25);
 		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 20);
+		Assert.assertTrue(resultset.get(0).max == 30);
 
+		resultset = tree.query(30);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(2 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 20);
+		Assert.assertTrue(resultset.get(0).max == 30);
+		Assert.assertTrue(resultset.get(1).min == 30);
+		Assert.assertTrue(resultset.get(1).max == 41);
+		
 		resultset = tree.query(35);
 		log.info(TestUtils.printIntervals(resultset));
-
-		resultset = tree.query(45);
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 30);
+		Assert.assertTrue(resultset.get(0).max == 41);
+		
+		resultset = tree.query(63);
 		log.info(TestUtils.printIntervals(resultset));
-
-		resultset = tree.query(53);
-
+		Assert.assertTrue(2 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 50);
+		Assert.assertTrue(resultset.get(0).max == 65);
+		Assert.assertTrue(resultset.get(1).min == 60);
+		Assert.assertTrue(resultset.get(1).max == 80);
+	
+		resultset = tree.query(110);
 		log.info(TestUtils.printIntervals(resultset));
-
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 100);
+		Assert.assertTrue(resultset.get(0).max == 200);
+		
+		resultset = tree.query(125);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(2 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 125);
+		Assert.assertTrue(resultset.get(0).max == 150);
+		Assert.assertTrue(resultset.get(1).min == 100);
+		Assert.assertTrue(resultset.get(1).max == 200);
+		
+		resultset = tree.query(130);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(2 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 125);
+		Assert.assertTrue(resultset.get(0).max == 150);
+		Assert.assertTrue(resultset.get(1).min == 100);
+		Assert.assertTrue(resultset.get(1).max == 200);
+		
+		resultset = tree.query(325);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(1 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 300);
+		Assert.assertTrue(resultset.get(0).max == 600);
+		
+		resultset = tree.query(370);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(2 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 350);
+		Assert.assertTrue(resultset.get(0).max == 400);
+		Assert.assertTrue(resultset.get(1).min == 300);
+		Assert.assertTrue(resultset.get(1).max == 600);
+		
+		resultset = tree.query(456);
+		log.info(TestUtils.printIntervals(resultset));
+		Assert.assertTrue(3 == resultset.size());
+		Assert.assertTrue(resultset.get(0).min == 455);
+		Assert.assertTrue(resultset.get(0).max == 460);
+		Assert.assertTrue(resultset.get(1).min == 450);
+		Assert.assertTrue(resultset.get(1).max == 500);
+		Assert.assertTrue(resultset.get(2).min == 300);
+		Assert.assertTrue(resultset.get(2).max == 600);
+		
 	}	
 
 }
 
-class StatusListener implements TreeStatusListener {
-	private AtomicBoolean loaded = new AtomicBoolean(false);
-
-	public boolean isLoaded() {
-		return loaded.get();
-	}
-
-	public void loaded() {
-		loaded.set(true);
-	}
-
-}
-
-class Memory {
-	private static final int MB = 1024 * 1024;
-
-	private long usedMemory;
-	private long freeMemory;
-	private long totalMemory;
-	private long maxMemory;
-
-	Memory() {
-		Runtime runtime = Runtime.getRuntime();
-		usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / MB;
-		freeMemory = runtime.freeMemory() / MB;
-		totalMemory = runtime.totalMemory() / MB;
-		maxMemory = runtime.maxMemory() / MB;
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder("\n##### Heap utilization statistics [MB] #####");
-
-		sb.append(String.format("\nUsed Memory: %d", usedMemory));
-		sb.append(String.format("\nFree Memory: %d", freeMemory));
-		sb.append(String.format("\nTotal Memory: %d", totalMemory));
-		sb.append(String.format("\nMax Memory: %d", maxMemory));
-
-		sb.append("\n#############################################\n");
-
-		return sb.toString();
-	}
-
-}
