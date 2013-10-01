@@ -1,6 +1,5 @@
 package riz.silvano.intervaltree;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -9,9 +8,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import riz.silvano.intervaltree.IntervalTree.TreeStatusListener;
-import riz.silvano.intervaltree.loader.IntervalFileLoader;
 
 /**
  * Tests
@@ -21,15 +21,17 @@ import riz.silvano.intervaltree.loader.IntervalFileLoader;
 @RunWith(JUnit4.class)
 public class IntervalTreeTest {
 
+	private static final Logger log = LoggerFactory.getLogger(IntervalTreeTest.class);
+
 	@Before
 	public void setUp() {
-
+		// Put here something you want to be executed before the test
 	}
 
 	@Test
-	public void testIntervalTree() throws InterruptedException {
+	public void testIntervalTreeConstruction() throws InterruptedException {
 
-		List<Interval> data = generate(-1);
+		List<Interval> data = TestUtils.generate(20, 0, 100, 10, 40);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
@@ -41,8 +43,7 @@ public class IntervalTreeTest {
 		Assert.assertNotNull(tree);
 		Assert.assertEquals(data.size(), tree.getNodeCount());
 
-		System.out.println(tree);
-
+		log.info("Tree:\n" + tree);
 	}
 
 	@Test
@@ -50,12 +51,28 @@ public class IntervalTreeTest {
 
 		Memory before = new Memory();
 
-		// Used -Xmx2048m
-		// 1000000 give a java.lang.OutOfMemoryError: Java heap space in the construction
-		// 100000 give a java.lang.OutOfMemoryError: Java heap space in the processing
-		// 50000 it's seems very slow
-		// 20000 it's seems slow
-		List<Interval> data = generate(100000);
+		// Used -Xmx1048m
+		// TestUtils.generate(1000000, 0, 10000000, 50, 1000) is too much
+		// TestUtils.generate(100000, 0, 10000000, 50, 1000) is ok:
+		//
+		// ##### Heap utilization statistics [MB] #####
+		// Used Memory: 2
+		// Free Memory: 12
+		// Total Memory: 15
+		// Max Memory: 1484
+		// #############################################
+		//
+		// [main] INFO riz.silvano.intervaltree.IntervalTreeTest - Mem after
+		// 
+		// ##### Heap utilization statistics [MB] #####
+		// Used Memory: 78
+		// Free Memory: 82
+		// Total Memory: 161
+		// Max Memory: 1484
+		// #############################################
+		//
+		// The error when there are too many overlaps is: java.lang.OutOfMemoryError: Java heap space
+		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 10000);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
@@ -69,8 +86,8 @@ public class IntervalTreeTest {
 
 		Memory after = new Memory();
 
-		System.out.println("Mem before\n " + before);
-		System.out.println("Mem after\n " + after);
+		log.info("Mem before\n " + before);
+		log.info("Mem after\n " + after);
 
 	}
 
@@ -79,7 +96,7 @@ public class IntervalTreeTest {
 
 		Memory before = new Memory();
 
-		List<Interval> data = generate(100000);
+		List<Interval> data = TestUtils.generate(100000, 0, 10000000, 50, 10000);
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
@@ -93,29 +110,27 @@ public class IntervalTreeTest {
 
 		Memory after = new Memory();
 
-		System.out.println("Mem before\n " + before);
-		System.out.println("Mem after\n " + after);
+		log.info("Mem before\n " + before);
+		log.info("Mem after\n " + after);
 
-		// Try a query
-		long overallstart = System.currentTimeMillis();
-		long start;
-		long end;
+		// Try a few queries
 		long query;
+
+		long overallstart = System.currentTimeMillis();
 		for (int i = 0; i < 1000; i++) {
 			query = 0 + (int) (Math.random() * ((1000000 - 0) + 1));
-			start = System.currentTimeMillis();
 			List<Interval> resultset = tree.query(query);
-			end = System.currentTimeMillis();
-			System.out.println("Query executed in " + (end - start) + " ms ");
-			printQueryResult(resultset, query);
+
+			log.info(TestUtils.printIntervals(resultset));
 		}
 		long overallend = System.currentTimeMillis();
-		System.out.println("Total query time " + (overallend - overallstart) + " ms ");
+
+		log.info("Total query time " + (overallend - overallstart) + " ms ");
 	}
 
 	@Test
 	public void testQuery() throws InterruptedException {
-		List<Interval> data = generate(-1);
+		List<Interval> data = TestUtils.generate();
 
 		StatusListener listener = new StatusListener();
 		IntervalTree tree = new IntervalTree(data, listener);
@@ -124,130 +139,28 @@ public class IntervalTreeTest {
 			Thread.sleep(100);
 		}
 
-		System.out.println(tree);
+		log.info("Tree : \n", tree);
 
 		List<Interval> resultset = tree.query(5);
-		printQueryResult(resultset, 5);
+		log.info(TestUtils.printIntervals(resultset));
 
 		resultset = tree.query(15);
-		printQueryResult(resultset, 15);
+		log.info(TestUtils.printIntervals(resultset));
 
 		resultset = tree.query(25);
-		printQueryResult(resultset, 25);
+		log.info(TestUtils.printIntervals(resultset));
 
 		resultset = tree.query(35);
-		printQueryResult(resultset, 35);
+		log.info(TestUtils.printIntervals(resultset));
 
 		resultset = tree.query(45);
-		printQueryResult(resultset, 45);
+		log.info(TestUtils.printIntervals(resultset));
 
 		resultset = tree.query(53);
-		printQueryResult(resultset, 53);
-	}
 
-	@Test
-	public void testQueryTimeUsingFileData() throws InterruptedException {
+		log.info(TestUtils.printIntervals(resultset));
 
-		Memory before = new Memory();
-
-		List<Interval> data = generateFromFiles();
-		Memory after = new Memory();
-
-		System.out.println("Mem before Data load\n " + before);
-		System.out.println("Mem after Data load\n " + after);
-
-		StatusListener listener = new StatusListener();
-		IntervalTree tree = new IntervalTree(data, listener);
-
-		while (!listener.isLoaded()) {
-			Thread.sleep(100);
-		}
-		Assert.assertNotNull(tree);
-
-		after = new Memory();
-
-		System.out.println("Mem before Tree Load\n " + before);
-		System.out.println("Mem after Tree Load\n " + after);
-
-		// Try a query
-		long overallstart = System.currentTimeMillis();
-		long start;
-		long end;
-		long query;
-		
-		long cardNumMin = Long.parseLong("300000000000");
-		long cardNumMax = Long.parseLong("600000000000");
-		
-		for (int i = 0; i < 1000; i++) {
-			query = cardNumMin + (long) (Math.random() * (cardNumMax - cardNumMin));
-			start = System.currentTimeMillis();
-			List<Interval> resultset = tree.query(query);
-			end = System.currentTimeMillis();
-			System.out.println("Query executed in " + (end - start) + " ms ");
-			printQueryResult(resultset, query);
-		}
-		long overallend = System.currentTimeMillis();
-		System.out.println("Total query time " + (overallend - overallstart) + " ms ");
-	}
-	// ---------------------------------
-	// Utility methods
-	// ---------------------------------
-
-	private void printQueryResult(List<Interval> intervals, long query) {
-		System.out.println("Query: " + query);
-
-		if (intervals == null) {
-			System.out.println("Null resultset");
-		} else if (intervals.size() == 0) {
-			System.out.println("Empty resultset");
-		} else {
-			for (Interval interval : intervals) {
-				System.out.print(String.format("[%d..%d]", interval.getMin(), interval.getMax()));
-			}
-			System.out.println();
-		}
-	}
-
-	private List<Interval> generate(int size) {
-		List<Interval> data = new ArrayList<Interval>();
-
-		if (size < 1) {
-			data.add(new Interval(0, 9, "0..9"));
-			data.add(new Interval(10, 19, "10..19"));
-			data.add(new Interval(20, 29, "20..29"));
-			data.add(new Interval(30, 39, "30..39"));
-			data.add(new Interval(40, 49, "40..49"));
-			data.add(new Interval(50, 59, "50..59"));
-			data.add(new Interval(45, 55, "45..55"));
-		} else {
-
-			int minBoundary = 0;
-			int maxBoundary = 1000000;
-			long minWidth = 50;
-			long maxWidth = 1000;
-
-			long min;
-			long width;
-			String info;
-			for (int i = 0; i < size; i++) {
-				min = minBoundary + (int) (Math.random() * ((maxBoundary - maxWidth - minBoundary) + 1));
-				width = minWidth + (int) (Math.random() * ((maxWidth - minWidth) + 1));
-				info = String.format("%d..%d", min, min + width);
-				data.add(new Interval(min, min + width, info));
-			}
-		}
-
-		return data;
-
-	}
-	
-	private List<Interval> generateFromFiles() {
-		IntervalFile file1 = new IntervalFile("BIN021813.dat", "AIB", "2013-02-18");
-		IntervalFile file2 = new IntervalFile("ELAVON BIN.ACCTRNG_19022013", "ELAVON", "2013-02-19");
-
-		IntervalFile[] files = { file1, file2 };
-		return IntervalFileLoader.loadIntervalsFromFiles(files);
-	}
+	}	
 
 }
 
