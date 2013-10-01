@@ -66,7 +66,6 @@ public class IntervalTreeTestFiles {
 			start = System.currentTimeMillis();
 			List<Interval> resultset = tree.query(query);
 			end = System.currentTimeMillis();
-			System.out.println("Query executed in " + (end - start) + " ms ");
 			log.info(TestUtils.printIntervals(resultset));
 		}
 		long overallend = System.currentTimeMillis();
